@@ -1,0 +1,28 @@
+{
+    "manifest_version": 3,
+    "name": "Leetcode meets OpenAI",
+    "version": "1.0",
+    "permissions": ["webRequest", "scripting", "debugger", "tabs", "activeTab"],
+
+    "host_permissions": [
+        "https://api.openai.com/",
+        "https://leetcode.com/problems/*"
+    ],
+
+    "background": {
+        "service_worker": "background.js"
+    },
+
+    "content_scripts": [
+        {
+            "matches": ["https://leetcode.com/problems/*"],
+            "js": ["inject.js"]
+        }
+    ],
+    "web_accessible_resources": [
+        {
+            "resources": ["content.js"],
+            "matches": ["https://leetcode.com/problems/*"]
+        }
+    ]
+}
