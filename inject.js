@@ -6,4 +6,4 @@ function injectScript(filePath, tag) {
     node.appendChild(script);
 }
 
-injectScript(chrome.runtime.getURL("content.js"), "body");
+injectScript(chrome.runtime.getURL("web-script.js"), "body");

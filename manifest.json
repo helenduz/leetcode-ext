@@ -16,13 +16,13 @@
     "content_scripts": [
         {
             "matches": ["https://leetcode.com/problems/*"],
-            "js": ["inject.js"]
+            "js": ["inject.js", "content.js"]
         }
     ],
     "web_accessible_resources": [
         {
-            "resources": ["content.js"],
-            "matches": ["https://leetcode.com/problems/*"]
+            "resources": ["web-script.js"],
+            "matches": ["https://leetcode.com/*"]
         }
     ]
 }
