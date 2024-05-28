@@ -80,7 +80,7 @@ async function checkAndFetchResult(details) {
         //     pingContentScript(aiResponse);
         // }
         const aiResponse = await callBackend(data);
-        pingContentScript(aiResponse);
+        await pingContentScript(aiResponse, details.tabId);
     } catch (error) {
         // TODO: should ultimately notify user somehow of error
         console.error("checkAndFetchResult errors:", error);
@@ -131,23 +131,14 @@ async function callBackend(submissionResult) {
     }
 }
 
-function pingContentScript(aiResponse) {
-    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-        // Ensure there is at least one tab
-        var activeTab = tabs[0];
-        console.log("inside ping", activeTab.id);
-
-        if (tabs.length > 0) {
-            console.log(activeTab.id);
-            // TODO: unpack aiResponse (should be a json from backend, already in JS object) into format we want
-            const packetToContentScript = {
-                payload: aiResponse,
-                tabId: activeTab.id,
-            };
-            chrome.tabs.sendMessage(tabs[0].id, packetToContentScript);
-        }
-    });
-    // PICKUP LOCATION: activeTab perissions, can you send when it's not active??
+async function pingContentScript(aiResponse, tabId) {
+    console.log("pingContentScript:", tabId);
+    // TODO: unpack aiResponse (should be a json from backend, already in JS object) into format we want
+    const packetToContentScript = {
+        payload: aiResponse,
+        tabId: tabId,
+    };
+    await chrome.tabs.sendMessage(tabId, packetToContentScript);
 }
 
 run();
