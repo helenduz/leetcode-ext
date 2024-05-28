@@ -16,7 +16,11 @@ function main() {
             console.log("received event:", data);
 
             var languageId = monaco.editor.getModels()[0].getLanguageId();
-            appendCommentToMonacoEditor(languageId, data.message);
+            appendCommentToMonacoEditor(
+                languageId,
+                data.payload,
+                data.questionId
+            );
         });
     } else {
         console.log("Monaco Editor is not available. Retrying in 500ms.");
@@ -24,7 +28,7 @@ function main() {
     }
 }
 
-function appendCommentToMonacoEditor(language, newCode) {
+function appendCommentToMonacoEditor(language, newCode, questionId) {
     const commentDelimiters = {
         javascript: "//",
         python: "#",
@@ -44,5 +48,20 @@ function appendCommentToMonacoEditor(language, newCode) {
         const combinedContent = currentContent + "\n" + comment;
         editor.setValue(combinedContent);
         console.log("content is set");
+
+        // update local storage for editor's cotent
+        for (var i = 0; i < localStorage.length; i++) {
+            const curKey = localStorage.key(i);
+            if (isKeyForCurrentEditor(curKey, questionId, language)) {
+                localStorage.setItem(curKey, combinedContent);
+            }
+        }
     }
+}
+
+function isKeyForCurrentEditor(str, questionId, language) {
+    // search local storage for key that starts with questionId and ends with language
+    // note: language should be in lowercase
+    const regex = new RegExp(`^${questionId}.*${language}$`);
+    return regex.test(str);
 }

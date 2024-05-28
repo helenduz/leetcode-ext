@@ -80,7 +80,7 @@ async function checkAndFetchResult(details) {
         //     pingContentScript(aiResponse);
         // }
         const aiResponse = await callBackend(data);
-        await pingContentScript(aiResponse, details.tabId);
+        await pingContentScript(aiResponse, details.tabId, data.question_id);
     } catch (error) {
         // TODO: should ultimately notify user somehow of error
         console.error("checkAndFetchResult errors:", error);
@@ -131,12 +131,12 @@ async function callBackend(submissionResult) {
     }
 }
 
-async function pingContentScript(aiResponse, tabId) {
+async function pingContentScript(aiResponse, tabId, questionIdStr) {
     console.log("pingContentScript:", tabId);
     // TODO: unpack aiResponse (should be a json from backend, already in JS object) into format we want
     const packetToContentScript = {
         payload: aiResponse,
-        tabId: tabId,
+        questionId: questionIdStr,
     };
     await chrome.tabs.sendMessage(tabId, packetToContentScript);
 }
