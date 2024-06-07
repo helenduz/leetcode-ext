@@ -74,13 +74,11 @@ async function checkAndFetchResult(details) {
             "checkAndFetchResult: successfully made call to /check, result:",
             data
         );
-        // TODO: uncomment below i.e. only call backend when submission not accepted
-        // if (data.status_msg !== "Accepted") {
-        //     const aiResponse = await callBackend(data);
-        //     pingContentScript(aiResponse);
-        // }
-        const aiResponse = await callBackend(data);
-        await pingContentScript(aiResponse, details.tabId, data.question_id);
+        // Note: we only call backend when submission is not accepted
+        if (data.status_msg !== "Accepted") {
+            let aiResponse = await callBackend(data);
+            pingContentScript(aiResponse, details.tabId, data.question_id);
+        }
     } catch (error) {
         // TODO: should ultimately notify user somehow of error
         console.error("checkAndFetchResult errors:", error);
@@ -88,54 +86,37 @@ async function checkAndFetchResult(details) {
 }
 
 async function callBackend(submissionResult) {
-    // TODO: should call backend server once set up
-    const apiKey = "REPLACE_WITH_API_KEY";
-    const prompt = {
-        model: "gpt-3.5-turbo",
-        messages: [
-            {
-                role: "system",
-                content: "You are a helpful assistant.",
-            },
-            {
-                role: "user",
-                content:
-                    "this is my code " +
-                    submissionContent.code +
-                    "this is the submission result " +
-                    // TODO: check if full_runtime_error is null
-                    submissionResult.full_runtime_error +
-                    " :give me a 50 word report on the errors and time complexity ",
-            },
-        ],
-    };
-
+    // TODO: after deployment, replace with deployed URL
     try {
-        const response = await fetch(
-            "https://api.openai.com/v1/chat/completions",
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: "Bearer " + apiKey,
-                },
-                body: JSON.stringify(prompt),
-            }
-        );
+        const response = await fetch("http://localhost:8787", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                code: submissionContent.code,
+                analysis: submissionContent.analysis,
+                result: submissionResult,
+            }),
+        });
         const data = await response.json();
-        console.log("openAI response:", data);
+        console.log("Backend response:", data);
+
+        if (!response.ok) {
+            // TODO: somehow notify user of error
+            console.error("Backend response errors: ", response.message);
+        }
         return data;
     } catch (error) {
-        // TODO: should ultimately notify user somehow of error
-        console.error("Error from openAI call:", error);
+        // TODO: somehow notify user of error
+        console.error(error);
     }
 }
 
 async function pingContentScript(aiResponse, tabId, questionIdStr) {
     console.log("pingContentScript:", tabId);
-    // TODO: unpack aiResponse (should be a json from backend, already in JS object) into format we want
     const packetToContentScript = {
-        payload: aiResponse,
+        payload: aiResponse.data || `Error: ${aiResponse.message}`, // backend returns data if successful or else returns error message
         questionId: questionIdStr,
     };
     await chrome.tabs.sendMessage(tabId, packetToContentScript);

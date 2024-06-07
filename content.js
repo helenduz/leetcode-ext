@@ -1,6 +1,6 @@
 chrome.runtime.onMessage.addListener(function (request) {
     var data = {
-        // TODO: message: expecting a string currently, can be array of strings if needed later
+        // TODO: payload: expecting a string currently, can be array of strings if needed later
         payload: request.payload,
         questionId: request.questionId,
     };
@@ -8,16 +8,4 @@ chrome.runtime.onMessage.addListener(function (request) {
         new CustomEvent("lce-msg", { detail: data })
     );
     console.log("dispatchRes: ", dispatchRes);
-
-    return true;
 });
-
-// setTimeout(() => {
-//     var data = {
-//         message: "will I be persisted",
-//     };
-//     const dispatchRes = document.dispatchEvent(
-//         new CustomEvent("lce-msg", { detail: data })
-//     );
-//     console.log("dispatchRes: ", dispatchRes);
-// }, 10000);
