@@ -1,10 +1,27 @@
 let submissionContent = null;
+let curProblemName = null;
+
+function setCurProblemErrorMessage(errorMessage) {
+    // basically: this function only involves actions with storage, other pieces react to storage changes
+    // popup.js has listener that updates message in popup, and also will get the message from storage in startup
+    // background.js should have listener on tab update AND storage changes, set icon based on storage
+    // storage: {err_problem_name: "some message"}, non existent key means no error
+    if (!errorMessage) {
+        // no error, removes from storage
+        // FIXME: does this error if key doesn't exist?
+        chrome.storage.local.remove([curProblemName]);
+    } else {
+        // sets error message in storage
+        chrome.storage.local.set({ [curProblemName]: errorMessage });
+    }
+}
 
 function run() {
     // Monitor POST requests to /submit
     chrome.webRequest.onBeforeRequest.addListener(
         function (details) {
             console.log(details.url);
+            curProblemName = getProblemNameFromUrl(details.url);
             submissionContent = getSubmittedContent(details);
             // TODO: error handling when content is null
             chrome.webRequest.onCompleted.addListener(
@@ -16,6 +33,11 @@ function run() {
         { urls: ["*://leetcode.com/problems/*/submit/"] },
         ["requestBody"]
     );
+}
+
+function getProblemNameFromUrl(urlStr) {
+    const url = new URL(urlStr);
+    return url.pathname.split("/")[2];
 }
 
 function getSubmittedContent(details) {
@@ -66,8 +88,11 @@ async function checkAndFetchResult(details) {
     try {
         const response = await fetch(details.url);
         if (!response.ok) {
-            // TODO: should ultimately notify user somehow of error
+            setCurProblemErrorMessage(
+                "An error occurred when connecting to LeetCode"
+            );
             console.error("Fetch to /check errors:", response.statusText);
+            return;
         }
         const data = await response.json();
         console.log(
@@ -77,10 +102,17 @@ async function checkAndFetchResult(details) {
         // Note: we only call backend when submission is not accepted
         if (data.status_msg !== "Accepted") {
             let aiResponse = await callBackend(data);
-            pingContentScript(aiResponse, details.tabId, data.question_id);
+            await pingContentScript(
+                aiResponse,
+                details.tabId,
+                data.question_id
+            );
+            setCurProblemErrorMessage(null);
         }
     } catch (error) {
-        // TODO: should ultimately notify user somehow of error
+        setCurProblemErrorMessage(
+            `An error occurred in our server when you last submitted this problem: ${error}`
+        );
         console.error("checkAndFetchResult errors:", error);
     }
 }
@@ -99,17 +131,14 @@ async function callBackend(submissionResult) {
                 result: submissionResult,
             }),
         });
+        if (!response.ok) {
+            throw new Error("Backend API call errors");
+        }
         const data = await response.json();
         console.log("Backend response:", data);
-
-        if (!response.ok) {
-            // TODO: somehow notify user of error
-            console.error("Backend response errors: ", response.message);
-        }
         return data;
     } catch (error) {
-        // TODO: somehow notify user of error
-        console.error(error);
+        throw new Error(error);
     }
 }
 

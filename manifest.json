@@ -2,7 +2,11 @@
     "manifest_version": 3,
     "name": "Leetcode meets OpenAI",
     "version": "1.0",
-    "permissions": ["webRequest", "debugger"],
+    "permissions": ["webRequest", "debugger", "storage", "tabs"],
+
+    "action": {
+        "default_popup": "popup.html"
+    },
 
     "host_permissions": ["https://leetcode.com/problems/*"],
 
