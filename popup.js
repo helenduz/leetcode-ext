@@ -8,14 +8,15 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 });
 
-function getProblemNameFromUrl(urlStr) {
-    const url = new URL(urlStr);
-    return url.pathname.split("/")[2];
-}
-
 function setErrorMessageForCurProblem() {
     chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-        var problemName = getProblemNameFromUrl(tabs[0].url);
+        const tabUrl = new URL(tabs[0].url);
+        if (!isLeetCodeProb(tabUrl)) {
+            document.getElementById("error-display").innerHTML =
+                "Go to a LeetCode problem to use this extension!";
+            return;
+        }
+        var problemName = getProblemNameFromUrl(tabUrl);
         chrome.storage.local.get().then((items) => {
             console.log(items);
             var errorMessage = items[problemName]; // if no error message (success), returns undefined
@@ -43,4 +44,16 @@ function printChangedItems(changes, namespace) {
             );
         }
     }
+}
+
+function isLeetCodeProb(url) {
+    return (
+        url.protocol === "https:" &&
+        url.hostname === "leetcode.com" &&
+        url.pathname.startsWith("/problems/")
+    );
+}
+
+function getProblemNameFromUrl(url) {
+    return url.pathname.split("/")[2];
 }
