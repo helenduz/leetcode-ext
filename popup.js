@@ -1,3 +1,11 @@
+document.getElementById("prompt-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+
+    const prompt = document.getElementById("prompt-input").value;
+    // TODO: add dompurify for input sanitization
+    chrome.runtime.sendMessage({ type: "prompt-input", data: prompt });
+});
+
 document.addEventListener("DOMContentLoaded", function () {
     console.log("inside outer listener, initial items in chrome storage:");
     setErrorMessageForCurProblem();
@@ -14,6 +22,8 @@ function setErrorMessageForCurProblem() {
         if (!isLeetCodeProb(tabUrl)) {
             document.getElementById("error-display").innerHTML =
                 "Go to a LeetCode problem to use this extension!";
+            // TODO: better way to hide prompt form
+            document.getElementById("prompt").style.display = "none";
             return;
         }
         var problemName = getProblemNameFromUrl(tabUrl);
