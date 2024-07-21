@@ -3,18 +3,27 @@ document.getElementById("prompt-form").addEventListener("submit", (e) => {
 
     const prompt = document.getElementById("prompt-input").value;
     // TODO: add dompurify for input sanitization
-    chrome.runtime.sendMessage({ type: "prompt-input", data: prompt });
+    var key = "prompt";
+    chrome.storage.session.set({ [key]: prompt });
+    console.log(`set ${key} to ${prompt}`);
 });
 
 document.addEventListener("DOMContentLoaded", function () {
     console.log("inside outer listener, initial items in chrome storage:");
-    setErrorMessageForCurProblem();
+    initializePopup();
 
     chrome.storage.onChanged.addListener(function (changes, namespace) {
         printChangedItems(changes, namespace);
-        setErrorMessageForCurProblem();
+        if (namespace === "local") {
+            setErrorMessageForCurProblem();
+        }
     });
 });
+
+function initializePopup() {
+    setErrorMessageForCurProblem();
+    setPromptFromStorage();
+}
 
 function setErrorMessageForCurProblem() {
     chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
@@ -31,13 +40,21 @@ function setErrorMessageForCurProblem() {
             console.log(items);
             var errorMessage = items[problemName]; // if no error message (success), returns undefined
             if (!errorMessage) {
-                document.getElementById("error-display").innerHTML = "All good";
+                document.getElementById("error-display").innerHTML =
+                    "All good, no errors!";
             } else {
                 document.getElementById("error-display").innerHTML =
                     errorMessage;
             }
         });
     });
+}
+
+async function setPromptFromStorage() {
+    var key = "prompt";
+    var prompObject = await chrome.storage.session.get(key);
+    const promptMsg = prompObject[key] || "";
+    document.getElementById("prompt-input").value = promptMsg;
 }
 
 function printChangedItems(changes, namespace) {

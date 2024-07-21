@@ -42,24 +42,6 @@ function run() {
         { urls: ["*://leetcode.com/problems/*/submit/"] },
         ["requestBody"]
     );
-
-    // Monitor user prompt input from popup
-    chrome.runtime.onMessage.addListener(async function (message) {
-        if (message.type === "prompt-input") {
-            await handleUserPrompt(message.data);
-        }
-    });
-}
-
-// PICKUP: we decided to keep one route on backend but just refine the getPrompt function to handle more knowledge & user prompt
-// note: might be good to also give the leetcode problem link to AI
-// big problem: how do we get the code content...imagine the use case, when would people actually try to take notes?
-async function handleUserPrompt(prompt) {
-    try {
-        console.log("Received user input:", prompt);
-    } catch (error) {
-        console.error("Error handling user input for prompt", error);
-    }
 }
 
 async function handleProblemSubmit(details) {
@@ -87,30 +69,34 @@ async function handleProblemSubmit(details) {
             "handleProblemSubmit: successfully made call to /check, result:",
             data
         );
-        // Note: we only call backend when submission is not accepted
+        // TODO: allow user to select if they want to add notes even when submission is accepted
         if (data.status_msg !== "Accepted") {
-            // rewrite to pass arguments by name
-            let aiResponse = await callBackend({
-                code: submissionContent.code,
-                analysis: submissionContent.analysis,
-                result: data,
-            });
-            await pingContentScript(
-                aiResponse,
-                details.tabId,
-                data.question_id
-            );
-            setCurProblemErrorMessage(null);
+            const userPrompt = await getUserPromptFromStorage();
+            if (userPrompt) {
+                // note: we only call backend if user has input a prompt
+                let aiResponse = await callBackend({
+                    code: submissionContent.code,
+                    analysis: submissionContent.analysis,
+                    result: data,
+                    prompt: userPrompt,
+                });
+                await pingContentScript(
+                    aiResponse,
+                    details.tabId,
+                    data.question_id
+                );
+                setCurProblemErrorMessage(null);
+            }
         }
     } catch (error) {
         setCurProblemErrorMessage(
-            `An error occurred in our server when you last submitted this problem: ${error}`
+            `An error occurred in our server when you last submitted this problem: ${error}` // TODO: use aiResponse.message?
         );
         console.error("handleProblemSubmit errors:", error);
     }
 }
 
-async function callBackend({ code, analysis, result }) {
+async function callBackend({ code, analysis, result, prompt }) {
     // TODO: after deployment, replace with deployed URL
     try {
         const response = await fetch("http://localhost:8787", {
@@ -122,6 +108,7 @@ async function callBackend({ code, analysis, result }) {
                 code: code,
                 analysis: analysis,
                 result: result,
+                prompt: prompt,
             }),
         });
         if (!response.ok) {
@@ -138,7 +125,7 @@ async function callBackend({ code, analysis, result }) {
 async function pingContentScript(aiResponse, tabId, questionIdStr) {
     console.log("pingContentScript:", tabId);
     const packetToContentScript = {
-        payload: aiResponse.data || `Error: ${aiResponse.message}`, // backend returns data if successful or else returns error message
+        payload: aiResponse.data + "\n",
         questionId: questionIdStr,
     };
     await chrome.tabs.sendMessage(tabId, packetToContentScript);
@@ -180,6 +167,14 @@ function updateIconForTab(tabId) {
         }
         chrome.action.setIcon({ path: "./icons/icon16.png", tabId: tabId });
     });
+}
+
+async function getUserPromptFromStorage() {
+    var key = "prompt";
+    var prompObject = await chrome.storage.session.get(key);
+    const promptMsg = prompObject[key] || "";
+    console.log(`user prompt from storage for ${key}:`, promptMsg);
+    return promptMsg;
 }
 
 run();
