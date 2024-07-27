@@ -69,24 +69,22 @@ async function handleProblemSubmit(details) {
             "handleProblemSubmit: successfully made call to /check, result:",
             data
         );
-        // TODO: allow user to select if they want to add notes even when submission is accepted
-        if (data.status_msg !== "Accepted") {
-            const userPrompt = await getUserPromptFromStorage();
-            if (userPrompt) {
-                // note: we only call backend if user has input a prompt
-                let aiResponse = await callBackend({
-                    code: submissionContent.code,
-                    analysis: submissionContent.analysis,
-                    result: data,
-                    prompt: userPrompt,
-                });
-                await pingContentScript(
-                    aiResponse,
-                    details.tabId,
-                    data.question_id
-                );
-                setCurProblemErrorMessage(null);
-            }
+        // TODO: allow user to select if they want to add notes even when submission is accepted (data.status_msg == "Accepted")
+        const userPrompt = await getUserPromptFromStorage();
+        if (userPrompt) {
+            // note: we only call backend if user has input a prompt
+            let aiResponse = await callBackend({
+                code: submissionContent.code,
+                analysis: submissionContent.analysis,
+                result: data,
+                prompt: userPrompt,
+            });
+            await pingContentScript(
+                aiResponse,
+                details.tabId,
+                data.question_id
+            );
+            setCurProblemErrorMessage(null);
         }
     } catch (error) {
         setCurProblemErrorMessage(
@@ -149,6 +147,7 @@ function setCurProblemErrorMessage(errorMessage) {
 function updateIconForTab(tabId) {
     // Get tab from tabId via chrome tabs query
     chrome.tabs.get(tabId, function (tab) {
+        if (chrome.runtime.lastError) return;
         if (!tab) return;
         // Note: non-LeetCode pages and success status would have default icons
         if (tab.url && isLeetCodeProb(new URL(tab.url))) {
