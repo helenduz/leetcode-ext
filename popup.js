@@ -52,31 +52,35 @@ async function setOnOffFromStorage() {
 
 // Update popup sections based on whether websit is leetcode or not & on/off status from storage
 async function setSections() {
-    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-        const tabUrl = new URL(tabs[0].url);
-        if (!isLeetCodeProb(tabUrl)) {
-            // Hide prompt & info section + disable on/off if not on leetcode
-            document.getElementById("prompt").style.display = "none";
-            document.getElementById("layout_info").style.display = "none";
-            document.getElementById("on-off-button").disabled = true;
-            document.getElementById("on-off-button").checked = false;
-            return;
-        } else {
-            // Hide alert section if on leetcode
-            document.getElementById("layout_alert").style.display = "none";
+    chrome.tabs.query(
+        { active: true, currentWindow: true },
+        async function (tabs) {
+            const tabUrl = new URL(tabs[0].url);
+            if (!isLeetCodeProb(tabUrl)) {
+                // Hide prompt & info section + disable on/off if not on leetcode
+                document.getElementById("prompt").style.display = "none";
+                document.getElementById("layout_info").style.display = "none";
+                document.getElementById("on-off-button").disabled = true;
+                document.getElementById("on-off-button").checked = false;
+                return;
+            } else {
+                // Hide alert section if on leetcode
+                document.getElementById("layout_alert").style.display = "none";
+            }
+
+            var key = "extension-on";
+            var onOffObject = await chrome.storage.session.get(key);
+            let onOff = onOffObject[key];
+            document.getElementById("on-off-button").checked = onOff;
+            if (!onOff) {
+                document.getElementById("prompt").style.display = "none";
+                document.getElementById("layout_info").style.display = "none";
+            } else {
+                document.getElementById("prompt").style.display = "block";
+                document.getElementById("layout_info").style.display = "block";
+            }
         }
-    });
-    var key = "extension-on";
-    var onOffObject = await chrome.storage.session.get(key);
-    let onOff = onOffObject[key];
-    document.getElementById("on-off-button").checked = onOff;
-    if (!onOff) {
-        document.getElementById("prompt").style.display = "none";
-        document.getElementById("layout_info").style.display = "none";
-    } else {
-        document.getElementById("prompt").style.display = "block";
-        document.getElementById("layout_info").style.display = "block";
-    }
+    );
 }
 
 // Update status section based on error message in storage for current problem
