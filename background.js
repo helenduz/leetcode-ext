@@ -21,7 +21,9 @@ function run() {
         chrome.tabs.query(
             { active: true, currentWindow: true },
             function (tabs) {
-                updateIconForTab(tabs[0].id);
+                if (tabs.length > 0 && tabs[0].id) {
+                    updateIconForTab(tabs[0].id);
+                }
             }
         );
     });
