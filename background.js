@@ -99,18 +99,22 @@ async function handleProblemSubmit(details) {
 async function callBackend({ code, analysis, result, prompt }) {
     // TODO: after deployment, replace with deployed URL
     try {
-        const response = await fetch("http://localhost:8787", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                code: code,
-                analysis: analysis,
-                result: result,
-                prompt: prompt,
-            }),
-        });
+        console.log("Calling backend");
+        const response = await fetch(
+            "https://leetnote-backend.helenduz.workers.dev/",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    code: code,
+                    analysis: analysis,
+                    result: result,
+                    prompt: prompt,
+                }),
+            }
+        );
         if (!response.ok) {
             throw new Error("Backend API call errors");
         }

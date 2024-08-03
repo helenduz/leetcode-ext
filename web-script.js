@@ -43,11 +43,12 @@ function appendCommentToMonacoEditor(language, newCode, questionId) {
     const editor = monaco.editor.getModels()[0];
     if (editor) {
         const currentContent = editor.getValue();
-        console.log(`currentContent: ${currentContent}`);
-        const comment = `${delimiter} ${newCode}`;
+        const newLines = newCode.trim().split("\n");
+        const comment = newLines
+            .map((line) => `${delimiter} ${line}`)
+            .join("\n");
         const combinedContent = currentContent + "\n" + comment;
         editor.setValue(combinedContent);
-        console.log("content is set");
 
         // update local storage for editor's cotent
         for (var i = 0; i < localStorage.length; i++) {
