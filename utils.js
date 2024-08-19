@@ -18,14 +18,15 @@ function getSubmittedContent(details) {
     try {
         const parsedPayload = JSON.parse(requestBody);
         const text = parsedPayload.typed_code;
-        return extractCodeAndAnalysis(text);
+        const language = parsedPayload.lang;
+        return extractCodeAndAnalysis(text, language);
     } catch (e) {
         console.error("Error:", e);
         return null;
     }
 }
 
-function extractCodeAndAnalysis(text) {
+function extractCodeAndAnalysis(text, language) {
     const analysisIndex = text.indexOf("## --analysis-- ##");
     var analysisText = "";
     var codeText = "";
@@ -35,13 +36,45 @@ function extractCodeAndAnalysis(text) {
             .substring(analysisIndex + "## --analysis-- ##".length)
             .trim();
     } else {
-        codeText = text.trim();
+        codeText = removeComments(text.trim(), language);
     }
 
     return {
         code: codeText,
         analysis: analysisText,
     };
+}
+
+function removeComments(text, language) {
+    const commentDelimiters = {
+        javascript: "//",
+        python: "#",
+        html: "<!--",
+        sql: "--",
+        python3: "#",
+        java: "//",
+        cpp: "//",
+        csharp: "//",
+        php: "//",
+        swift: "//",
+        kotlin: "//",
+        dart: "//",
+        go: "//",
+        ruby: "#",
+        scala: "//",
+        rust: "//",
+        typescript: "//",
+        racket: ";",
+        erlang: "%",
+        elixir: "#",
+    };
+    // break the code into lines
+    const codeLines = text.split("\n");
+    // remove lines that start with comment delimiter
+    const codeWithoutComments = codeLines.filter(
+        (line) => !line.startsWith(commentDelimiters[language])
+    );
+    return codeWithoutComments.join("\n");
 }
 
 export { isLeetCodeProb, getProblemNameFromUrl, getSubmittedContent };

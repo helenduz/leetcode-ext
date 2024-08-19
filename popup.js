@@ -89,7 +89,6 @@ function setStatusFromStorage() {
         const tabUrl = new URL(tabs[0].url);
         var problemName = getProblemNameFromUrl(tabUrl);
         chrome.storage.local.get().then((items) => {
-            console.log(items);
             var errorMessage = items[problemName]; // if no error message (success), returns undefined
             if (!errorMessage) {
                 document.getElementById("info-status-text").innerHTML =

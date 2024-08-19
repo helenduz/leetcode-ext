@@ -35,7 +35,21 @@ function appendCommentToMonacoEditor(language, newCode, questionId) {
         html: "<!--",
         sql: "--",
         python3: "#",
-        // Add more languages and their delimiters as needed.
+        java: "//",
+        cpp: "//",
+        csharp: "//",
+        php: "//",
+        swift: "//",
+        kotlin: "//",
+        dart: "//",
+        go: "//",
+        ruby: "#",
+        scala: "//",
+        rust: "//",
+        typescript: "//",
+        racket: ";",
+        erlang: "%",
+        elixir: "#",
     };
 
     const delimiter = commentDelimiters[language] || "//"; // Default to '//' if the language is not listed.
