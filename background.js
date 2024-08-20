@@ -163,14 +163,14 @@ function updateIconForTab(tabId) {
                 if (errorMessage) {
                     // Use error icon if something is wrong with this problem
                     chrome.action.setIcon({
-                        path: "./icons/error16.png",
+                        path: "./icons/error128.png",
                         tabId: tabId,
                     });
                     return;
                 }
             });
         }
-        chrome.action.setIcon({ path: "./icons/icon16.png", tabId: tabId });
+        chrome.action.setIcon({ path: "./icons/icon128.png", tabId: tabId });
     });
 }
 
